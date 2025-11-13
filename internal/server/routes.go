@@ -24,7 +24,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	}))
 
 	r.Get("/health", s.healthHandler)
-	userService := users.NewService(repo.New(s.db.Pool()), s.conn)
+	userService := users.NewService(repo.New(s.db.Pool()))
 	userHandler := users.NewHandler(userService)
 	r.Get("/register", userHandler.RegisterUser)
 

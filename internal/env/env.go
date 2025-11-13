@@ -12,6 +12,19 @@ var (
 	mu    sync.RWMutex
 )
 
+func IsProduction() (bool, error) {
+	val, ok := getFromCacheOrEnv("ENVIRONMENT")
+
+	if !ok {
+		return false, fmt.Errorf("ENVIROMENT variable  is not set")
+	}
+	if val == "prod" {
+		return true, nil
+	} else {
+		return false, nil
+	}
+}
+
 // getFromCacheOrEnv retrieves value from cache or environment
 func getFromCacheOrEnv(key string) (string, bool) {
 	mu.RLock()

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"io/fs"
+	"log"
 
 	"github.com/pressly/goose/v3"
 )
@@ -23,7 +24,13 @@ func (s *service) Migrate(dir string) error {
 	if err != nil {
 		return fmt.Errorf("migrate: %w", err)
 	}
-	defer db.Close()
+
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("Error closing database: %v", err)
+		}
+	}()
+
 	err = goose.SetDialect("postgres")
 	if err != nil {
 		return fmt.Errorf("migrate: %w", err)
@@ -41,6 +48,13 @@ func (s *service) MigrateDownFS(migrationsFS fs.FS, dir string) error {
 	if err != nil {
 		return fmt.Errorf("migrate: %w", err)
 	}
+
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("Error closing database: %v", err)
+		}
+	}()
+
 	goose.SetBaseFS(migrationsFS)
 	defer func() {
 		goose.SetBaseFS(nil)
@@ -64,6 +78,13 @@ func (s *service) MigrateDownAllFS(migrationsFS fs.FS, dir string) error {
 	if err != nil {
 		return fmt.Errorf("migrate: %w", err)
 	}
+
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("Error closing database: %v", err)
+		}
+	}()
+
 	goose.SetBaseFS(migrationsFS)
 	defer func() {
 		goose.SetBaseFS(nil)

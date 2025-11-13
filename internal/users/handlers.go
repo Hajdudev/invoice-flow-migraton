@@ -20,5 +20,4 @@ func (h *handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Something went wrong", http.StatusBadRequest)
 	}
-	return
 }

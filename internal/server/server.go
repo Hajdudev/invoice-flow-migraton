@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -9,29 +8,25 @@ import (
 	"time"
 
 	database "github.com/Hajdudev/invoice-flow/internal/adapters/postgresql"
-	"github.com/jackc/pgx/v5"
+	"github.com/Hajdudev/invoice-flow/internal/auth"
 )
 
 type Server struct {
-	port int
-	db   database.Service
-	conn *pgx.Conn
+	port    int
+	db      database.Service
+	jwtAuth auth.JWTAuthenticator
 }
 
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	database := database.New()
-	dbConn, err := database.GetDB(context.Background())
+	jwtAuth := auth.NewJWTAuthenticator()
+	auth.NewOauth()
 
-	defer dbConn.Close(context.Background())
-
-	if err != nil {
-		fmt.Errorf("error %v", err)
-	}
 	NewServer := &Server{
-		port: port,
-		db:   database,
-		conn: dbConn,
+		port:    port,
+		db:      database,
+		jwtAuth: *jwtAuth,
 	}
 
 	// Declare Server config
