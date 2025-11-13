@@ -1,0 +1,101 @@
+# Simple Makefile for a Go project
+
+# Build the application
+all: build test
+
+build:
+	@echo "Building..."
+	
+	
+	@go build -o main cmd/api/main.go
+
+# Build migration tool
+build-migrate:
+	@echo "Building migration tool..."
+	@go build -o migrate cmd/migrate/main.go
+
+# Run the application
+run:
+	@go run cmd/api/main.go
+
+# Run database migrations
+migrate:
+	@echo "Running database migrations..."
+	@go run cmd/migrate/main.go
+
+migrate-down:
+	@echo "Rolling back last migration..."
+	@go run cmd/migrate/main.go -action=down
+
+# Rollback all migrations
+migrate-down-all:
+	@echo "Rolling back all migrations..."
+	@go run cmd/migrate/main.go -action=down-all
+
+# Create a new migration file
+migrate-create:
+	@if [ -z "$(NAME)" ]; then \
+		echo "Error: NAME is required. Usage: make migrate-create NAME=your_migration_name"; \
+		exit 1; \
+	fi
+	@echo "Creating new migration: $(NAME)"; 
+	@goose create $(NAME) sql
+
+# Create DB container
+docker-run:
+	@if docker compose up --build 2>/dev/null; then \
+		: ; \
+	else \
+		echo "Falling back to Docker Compose V1"; \
+		docker-compose up --build; \
+	fi
+
+# Shutdown DB container
+docker-down:
+	@if docker compose down 2>/dev/null; then \
+		: ; \
+	else \
+		echo "Falling back to Docker Compose V1"; \
+		docker-compose down; \
+	fi
+
+# Start DB and run migrations
+docker-migrate: docker-run
+	@echo "Waiting for database to be ready..."
+	@sleep 3
+	@make migrate
+
+# Test the application
+test:
+	@echo "Testing..."
+	@go test ./... -v
+
+# Integrations Tests for the application
+itest:
+	@echo "Running integration tests..."
+	@go test ./internal/database -v
+
+# Clean the binary
+clean:
+	@echo "Cleaning..."
+	@rm -f main
+	@rm -f migrate
+
+# Live Reload
+watch:
+	@if command -v air > /dev/null; then \
+            air; \
+            echo "Watching...";\
+        else \
+            read -p "Go's 'air' is not installed on your machine. Do you want to install it? [Y/n] " choice; \
+            if [ "$$choice" != "n" ] && [ "$$choice" != "N" ]; then \
+                go install github.com/air-verse/air@latest; \
+                air; \
+                echo "Watching...";\
+            else \
+                echo "You chose not to install air. Exiting..."; \
+                exit 1; \
+            fi; \
+        fi
+
+.PHONY: all build build-migrate run migrate migrate-create test clean watch docker-run docker-down docker-migrate itest
